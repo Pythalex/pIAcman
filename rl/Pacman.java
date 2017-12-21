@@ -3,6 +3,7 @@ package rl;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.util.ArrayList;
+import java.util.Random;
 
 import javax.swing.ImageIcon;
 
@@ -43,6 +44,8 @@ public class Pacman extends Agent {
 	private int animdir = 1;
 	private int animpos = 0;
 
+	// actions possibles
+    int[] actions;
 
 
 	Pacman(Board BD) {
@@ -50,9 +53,9 @@ public class Pacman extends Agent {
 		loadimages();
 
 		// Define the possible actions
-		int[] actions = new int[8];
+		actions = new int[8];
 		for(int a=0; a<actions.length; a++) actions[a]=a;
-		ia = new Qlearn(actions, this);
+		ia = new Qlearn(actions);
 		lastState = -1;
 		lastAction = -1;
 		good = 0;
@@ -189,6 +192,17 @@ public class Pacman extends Agent {
 		dy = (int) Math.round(Math.random())*2-1;
 	}
 
+    private int random_move(boolean renvoieAction) {
+	    if (renvoieAction){
+            Random rdmGen = new Random();
+            return rdmGen.nextInt(actions.length);
+        } else {
+            dx = (int) Math.round(Math.random()) * 2 - 1;
+            dy = (int) Math.round(Math.random()) * 2 - 1;
+            return -1;
+        }
+    }
+
 
 	/*
 	 * following scheme :
@@ -233,7 +247,11 @@ public class Pacman extends Agent {
 		if((cell_state&b.STATE_BADGUY)!=0) { // trouver un fantome
 			eaten++;
 			reward = r_ghost;
+
 			// MAJ IA
+			if (use_ia){ // dire à l'IA qu'elle a perdu
+                ia.learn(lastState, lastAction, id_state, reward);
+			}
 			return false;
 
 		} else if ((cell_state&b.STATE_GOODSTUFF)!=0) { // trouver de la nourriture
@@ -248,17 +266,23 @@ public class Pacman extends Agent {
 			reward = r_stuck;
 		}
 
-		if (lastState != -1) {
-			// MAJ IA
+		/**
+		 * A l'état -1, c'est le début du jeu, l'IA ne joue pas vraiment (le choix est aléatoire)
+		 * et donc l'apprentissage ne débute qu'à partir du tour suivant
+		 */
+		if (use_ia && lastState != -1) {
+			ia.learn(lastState, lastAction, id_state, reward);
 		}
 
 		if(use_ia){
 			// choose an action here using qlearn
-			ia.play(id_state, reward);
+			id_action = ia.chooseAction(id_state);
+			goInDirection(id_action);
 		}
 
 		else { // random direction
-			random_move();
+            id_action = random_move(true);;
+            goInDirection(id_action);
 		}
 
 		lastState = id_state;

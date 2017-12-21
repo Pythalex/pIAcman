@@ -11,76 +11,75 @@ import java.util.Random;
 
 public class Qlearn {
 
-    public double epsilon = 0.1; // parametre epsilon pour \epsilon-greedy
+    public double epsilon = 0.2; // parametre epsilon pour \epsilon-greedy
     public double alpha = 0.2; // taux d'apprentissage
     public double gamma = 0.9; // parametre gamma des eq. de Bellman/
+    public int t = 0;
 
     // tableau des actions possibles
     public int actions[];
     public final int nombreActions = 8;
-    public HashMap<Integer, Double[]> q; // s -> a -> q
+    public Hashtable<Integer, Double[]> q; // s -> a -> q
 
-    public Pacman pacman;
+    public double last_reward = 0;
 
     // Algorithme à utiliser
     private final int algo = 0; // 0 = qLearning ; 1 = SARSA
 
     // Constructeurs
-    public Qlearn(int[] actions, Pacman pacman) {
+    public Qlearn(int[] actions) {
         this.actions = actions;
-        q = new HashMap<>();
-        this.pacman = pacman;
+        q = new Hashtable<>();
     }
 
-    public Qlearn(int[] actions, double epsilon, double alpha, double gamma, Pacman pacman) {
+    public Qlearn(int[] actions, double epsilon, double alpha, double gamma) {
         this.actions = actions;
         this.epsilon = epsilon;
         this.alpha = alpha;
         this.gamma = gamma;
-        q = new HashMap<>();
-        this.pacman = pacman;
+        q = new Hashtable<>();
     }
 
     public void SARSA(int id_state, double reward){
 
     }
 
-    public void Q_LEARNING(int id_state, double reward){
+    public void Q_LEARNING(int s, int a, int s_prime){
 
-        if (!q.containsKey(id_state)){
-            Double[] tmp = new Double[nombreActions];
-            for (int i = 0; i < nombreActions; i++)
-                tmp[i] = 0d;
-            q.put(id_state, tmp);
-        }
+        // On choisit l'action considérée comme étant la meilleure par l'IA
+        int a_prime = argmax(q.get(s_prime));
 
-        int action = chooseAction(id_state);
-        pacman.goInDirection(action);
-        int new_state = pacman.calcState();
+        q.get(s)[a] = q.get(s)[a] + alpha
+                * (last_reward + gamma*q.get(s_prime)[a_prime]
+                - q.get(s)[a]);
 
-        if (!q.containsKey(new_state)){
-            Double[] tmp = new Double[nombreActions];
-            for (int i = 0; i < nombreActions; i++)
-                tmp[i] = 0d;
-            q.put(new_state, tmp);
-        }
-
-        int new_action = argmax(q.get(new_state));
-
-        q.get(id_state)[action] = q.get(id_state)[action] + alpha
-                * (reward + gamma*q.get(new_state)[new_action]
-                - q.get(id_state)[action]);
+        //System.out.println(q.get(s)[a]);
     }
 
     /**
      * Apprend en fonction de la récompense de la case en cours.
+     * Mémorise la récompense courante pour la prochaine étape.
+     * @param s : état précédent (temps t)
+     * @param a : action précédente (temps t)
+     * @param s_prime : état courant (temps t + 1)
+     * @param reward_prime : récompense de l'état courant (temps t + 1)
      */
-    public void play(int id_state, double reward){
-        if (algo == 0){ // QLearning
-            Q_LEARNING(id_state, reward);
-        } else {
-            SARSA(id_state, reward);
-        }
+    public void learn(int s, int a, int s_prime, double reward_prime){
+
+        //if (t == 2000000)
+        //    epsilon = 0.0;
+        //t++;
+
+        // si l'état est inconnu, on initialise les q values
+        if (!etatDejaRencontre(s))
+            initQValues(s);
+
+        if (!etatDejaRencontre(s_prime))
+            initQValues(s_prime);
+
+        Q_LEARNING(s, a, s_prime);
+
+        last_reward = reward_prime;
     }
 
     /**
@@ -90,7 +89,7 @@ public class Qlearn {
     public int chooseAction(int etat){
         Random rdmGen = new Random();
         double rdm = rdmGen.nextDouble();
-        if (rdm < epsilon){
+        if (rdm >= epsilon){
             return argmax(q.get(etat));
         } else {
             // on renvoie un random
@@ -98,7 +97,44 @@ public class Qlearn {
         }
     }
 
+    /**
+     * Initialises les q-values de l'état renseigné à 0, ne
+     * vérifie pas si les valeurs sont déjà initialisées.
+     * @param s : état à initialiser
+     */
+    public void initQValues(int s){
+        Double[] q_values = new Double[nombreActions];
+        for (int i = 0; i < nombreActions; i++)
+            q_values[i] = 0d;
+        q.put(s, q_values);
+    }
+
+    /**
+     * Indique si l'état a déjà été rencontré par l'IA.
+     * @param s : etat courant
+     * @return etat rencontré vrai, ou etat inconnu faux
+     */
+    public boolean etatDejaRencontre(int s){
+        return q.containsKey(s);
+    }
+
+    /**
+     * Renvoie l'argmax du tableau correspondant aux q-values
+     * en fonction de l'action considérée.
+     * @param q vecteur des q values selon a
+     * @return argmax
+     */
     public int argmax(Double[] q){
+
+        /*
+            Pour les premiers choix, il se peut que q ne soit pas définit
+            dans ces cas-là on renvoie un hasard.
+         */
+        if (q == null){
+            Random rdmGen = new Random();
+            return rdmGen.nextInt(actions.length);
+        }
+
         int aStar = 0;
         for (int a: actions){
             if (q[aStar] < q[a])
