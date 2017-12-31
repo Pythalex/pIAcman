@@ -13,7 +13,7 @@ public class Ghost extends Agent{
 	private Image ghost;
 	private int Id;
 	
-	private double pr_getPc=0.5; // Agressivité du fantome : 1=suit Pacman, 0=mvt aléatoire
+	private double pr_getPc=0.5; // Agressivité du fantome : 1=suit PacmanOld, 0=mvt aléatoire
 
 	
 	Ghost(Board BD) {

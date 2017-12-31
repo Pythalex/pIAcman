@@ -25,7 +25,7 @@ public class Qlearn {
 	public int a_prime;
 
 	// Algorithme à utiliser
-	private final int algo = 1; // 0 = qLearning ; 1 = SARSA
+	private final int algo = 1; // 0 = qLearning ; 1 = SARSA ; 2 = Random
 
 	// Constructeurs
 	public Qlearn(int[] actions) {
@@ -77,21 +77,36 @@ public class Qlearn {
 		if (!etatDejaRencontre(s_prime))
 			initQValues(s_prime);
 
-		if(algo==0)
-			Q_LEARNING(s, a, s_prime);
-		else
-			SARSA(s, a, s_prime);
+		switch(algo){
+            case 0:
+                Q_LEARNING(s, a, s_prime);
+                break;
+            case 1:
+                SARSA(s, a, s_prime);
+                break;
+            case 2:
+            default:
+                break;
+        }
 
 		last_reward = reward_prime;
 	}
 
 	/**
-	 * Determine une action a faire grâce au champ de vision.
-	 * avec une stratégie E-greedy
+	 * Renvoie l'action à executer avant de passer au prochain etat, selon l'algo
+     * utilisé.
 	 */
 	public int chooseAction(int etat){
-		if(algo == 1) return a_prime;
-		return e_greedy(q.get(etat));
+        switch(algo){
+            case 0:
+                return e_greedy(q.get(etat));
+            case 1:
+                return a_prime;
+            case 2:
+            default:
+                Random rdmGen = new Random();
+                return rdmGen.nextInt(actions.length);
+        }
 	}
 
 	/**
@@ -141,7 +156,8 @@ public class Qlearn {
 	}
 
 	/*
-	 *
+	 * Choisit une action selon les q_values renseignées,
+	 * avec une strategie e-greedy.
 	 */
 	public int e_greedy(Double[] q){
 		Random rdmGen = new Random();

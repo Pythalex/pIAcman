@@ -1,22 +1,11 @@
-/**
- * Tentative d'élargir le champ de vision
- * du pacman pour comparer les performances de
- * l'apprentissage avec le pacman d'origine.
- *
- * Non terminé, l'élargissement est normalement
- * fait mais reste à vérifier.
- */
-
 package rl;
 
-import java.awt.Graphics2D;
-import java.awt.Image;
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Random;
 
-import javax.swing.ImageIcon;
-
-public class Pacman extends Agent {
+public class PacmanOld extends Agent {
 
 	// Variables chooseAction
 	private int lastState = -1; // etat précédent
@@ -57,7 +46,7 @@ public class Pacman extends Agent {
     int[] actions;
 
 
-	Pacman(Board BD) {
+	PacmanOld(Board BD) {
 		super(BD);
 		loadimages();
 
@@ -73,7 +62,7 @@ public class Pacman extends Agent {
 		stuck = 0;
 
 		// InitState
-		InitLookCells(3);
+		InitLookCells(2);
 	}
 
 	public void ai_move() {
@@ -131,6 +120,9 @@ public class Pacman extends Agent {
 			if((dx==0)&&(dy==0)) idle = 1;
 			viewdx = dx;
 			viewdy = dy;
+			if (idle == 1){
+				int b = 1;
+			}
 
 		}
 		setx(x+(dx * speed));
@@ -216,15 +208,13 @@ public class Pacman extends Agent {
 	/*
 	 * following scheme :
 	 *
-	 *               9
-	 *            4  A F
-	 *         1  5  B 10 14
-	 *      0  2  6    11 15 17
-	 *         3  7  C 12 16
-	 *            8  D 13
-	 *               E
+	 *     4
+	 *    158
+	 *   02 9B
+	 *    36A
+	 *     7
 	 *
- 	 */
+	 */
 	private int getStateNb(int[] state) {
 		int id_s = 0;
 		for(int i=0; i<state.length; i++)
@@ -234,7 +224,7 @@ public class Pacman extends Agent {
 	}
 
 	public int calcState() {
-		int[] state = new int[23];
+		int[] state = new int[12];
 		int id=0;
 		for(Tuple<Integer,Integer> coord : lookcells) {
 			int level_st = b.getIndexFromCoord(posx+coord.x, posy+coord.y);
